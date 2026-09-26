@@ -1,0 +1,512 @@
+// We’ll implement a classic beginner programming problem: a guessing game. Here’s how it works:
+// The program will generate a random integer between 1 and 100. It will then prompt the player
+// to enter a guess. After a guess is entered, the program will indicate whether the guess is
+// too low or too high. If the guess is correct, the game will print a congratulatory message
+// and exit.
+
+
+
+
+
+// The first part of the guessing game program will ask for user input, process that input,
+// and check that the input is in the expected form.
+
+
+// The io library comes from the standard library, known as std:
+/*
+use std::io;   // #include <iostream>
+
+fn main() {
+    println!("Guess the number!");
+
+    println!("Please input your guess.");
+
+    let mut guess = String::new();
+
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Failed to read line");
+
+    println!("You guessed: {guess}");
+}
+*/
+
+
+
+// Let's decipher this code:
+
+// We start with the io standard library. By default, Rust has a set of items defined in
+// the standard library that it brings into the scope of every program. This set is called
+// the prelude.
+
+// If a type you want to use isn’t in the prelude, you have to bring that type into scope
+// explicitly with a *use* statement. Using the std::io library provides you with a number
+// of useful features, including the ability to accept user input.
+
+// The main function is the entry point into the program
+// The fn syntax declares a new function; the parentheses, (), indicate there are no parameters;
+// and the curly bracket, {, starts the body of the function.
+// println! is a macro that prints a string to the screen.
+
+// ---------------------- Strong Values with Variables --------------------------------
+// In order to store the user input, we need to "create" a variable
+/*
+    let mut guess == String::new()
+*/
+
+// We use let to create a variable
+/*
+    let value = 5;  // creates a new variable named value and binds it to 5
+*/
+
+// ***************************************************************************************
+// In Rust, variables are immutable by default, meaning once we give the variable a value,
+// the value won’t change.
+// ***************************************************************************************
+
+// In order to make a variable mutable, we use the mut keyword before the variable name
+/*
+    let mut value = 5;   // mutable
+    let number = 6;      // immutable
+*/
+
+// * String is a string type provided by the standard library that is a growable, UTF-8 encoded
+//   bit of text.
+// * String::new is a function that returns a new instance of a String
+// * The :: syntax in the ::new line indicates that new is an associated function of the
+//   String type. An associated function is a function that’s implemented on a type, in this
+//   case String. This new function creates a new, empty string. You’ll find a new function
+//   on many types because it’s a common name for a function that makes a new value of some kind.
+
+// In full, the let mut guess = String::new(); line has created a mutable variable that is
+// currently bound to a new, empty instance of a String
+
+// ------------------------------- Receiving User Input ----------------------------------
+// We have already included the input/output library using "use std::io"
+// We now call stdin function from the io module --> this function allows us to handle the
+// user's input
+// If we had NOT imported the io module using "use std::io" at the beginning of the program,
+// we'd still be able to call the stdin function as std::io::stdin
+
+// the .read_line(&mut guess) calls the read_line method 
+// The full job of read_line is to take whatever the user types into standard input and
+// append that into a string (without overwriting its contents), so we therefore pass that
+// string as an argument. Hence the string needs to be mutable to be able to be modified.
+
+// The & indicates that this argument is a reference, which gives you a way to let multiple
+// parts of your code access one piece of data without needing to copy that data into memory
+// multiple times.
+
+// ---------------------- Handling Potential Failure with Result ----------------------------
+// The next part of this line of code is * .expect("Failed to read line");*
+// We could have written the entire line as
+/*
+    io::stdin().read_line(&mut guess).expect("Failed to read line");
+*/
+// read_line puts whatever the user enters into the string we pass to it, but it also
+// *returns a Result value*. Result is an enumeration, often called an *enum*, which is
+// a type that can be in one of multiple possible states. We call each possible
+// state a *variant*.
+
+// The Result type is intended to handle errors
+
+// The variants (i.e. states) of Result can be *Ok* or *Err*. The Ok variant indicates the
+// operation was successful, and it contains the successfully generated value. The
+// Err variant means the operation failed, and it contains information about how or why
+// the operation failed.
+
+// Values of the Result type, like values of any type, have methods defined on them.
+// An instance of Result has an expect method that you can call. If this instance of
+// Result is an Err value, expect will cause the program to crash and display the message
+// that you passed as an argument to expect
+
+// Last but not least, println!("print number {number}") prints the value in the variable
+// named number and prints the value it holds
+
+
+
+// ---------------------- Generating a Secret Number --------------------------------
+// The next step is to generate a random number from 1 to 100. Rust does not provide a random
+// number generator in its standard library. Rust team, however, does provide a *rand crate*
+// with that functionality.
+
+// What is a crate?: Crate is a collection of Rust source code files
+// The *rand crate* is a library crate, which contains code that is intended to be used
+// in other programs and can’t be executed on its own.
+
+// Cargo allows us to coordinate external crates. In order to be able to write a code that
+// uses rand, we need to update the Cargo.toml file to include below under dependencies
+/*
+    rand = "0.8.5"
+*/
+
+// After updating your Cargo.toml, run the command cargo build on terminal which includes 
+// that external dependency. More precisely, Cargo fetches the latest versions of everything
+// that dependency needs from the registry, which is a copy of data from Crates.io.
+// Crates.io is where people in the Rust ecosystem post their open source Rust projects
+// for others to use.
+
+// After updating the registry, Cargo checks the [dependencies] section and downloads
+// any crates listed that aren’t already downloaded. In this case, although we only listed
+// rand as a dependency, Cargo also grabbed other crates that rand depends on to work.
+// After downloading the crates, Rust compiles them and then compiles the project with
+// the dependencies available.
+
+
+
+// ********************************** Git tip ************************************
+// Remember that you should commit your Cargo.lock file to Git for both applications
+// and libraries. It records the exact, precise versions of all direct and indirect
+// dependencies used in a project to ensure reproducible builds
+
+/*
+    In Rust, the primary difference between a library and an application (often called a binary)
+    comes down to whether the code can be executed on its own or if it is meant to be reused
+    by other programs
+
+
+    Key Differences at a Glance
+    
+    Feature +++++++ Application (Binary / bin) ++++++++ Library (lib)
+
+    Primary +++++++ To be executed directly by ++++++++ To provide reusable functionality
+    Purpose +++++++ an end-user or system.     ++++++++ for other projects.
+
+    Entry   +++++++ Requires a main.rs file    ++++++++ Requires a lib.rs file; no main()
+    Point   +++++++ with a main() function.    ++++++++ function needed.
+
+    Compilation +++ An executable binary file  ++++++++ A reusable asset (compiled locally
+    Output      +++ (e.g., .exe or an ELF      ++++++++ into other binaries or published as
+                +++  binary).                  ++++++++ a crate).
+*/
+
+
+// --------------------- Updating a Crate to Get a New Version -------------------------
+// When you do want to update a crate, Cargo provides the command update, which will ignore
+// the Cargo.lock file and figure out all the latest versions that fit your specifications
+// in Cargo.toml. Cargo will then write those versions to the Cargo.lock file. 
+
+
+
+// ------------------------- Generating a Random Number -----------------------------
+/*
+use std::io;
+use rand::Rng;
+
+fn main(){
+    println!("Guess the number game starts!");
+
+    let mut guess = String::new();
+
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Failed to read line");
+
+    let secret_number = rand::thread_rng().gen_range(1..=100);
+
+    println!("The Secret number is: {secret_number}");
+
+    println!("Input your guess");
+
+    println!("You guessed: {guess}");
+}
+*/
+
+
+
+// Breakdown of the code above
+
+// The Rng trait defines methods that random number generators implement, and this trait
+// must be in scope for us to use those methods. We'll cover this later
+
+// rand::thread_rng function that gives us the particular random number generator we’re going
+// to use: one that is local to the current thread of execution and is seeded by the
+// operating system. Then, we call the gen_range method on the random number generator.
+// This method is defined by the Rng trait that we brought into scope with the use rand::Rng;
+// statement. The gen_range method takes a range expression as an argument and generates a
+// random number in the range. The kind of range expression we’re using here takes the
+// form start..=end and is inclusive on the lower and upper bounds.
+
+// *************************************************************************************
+/*
+    Note: You won’t just know which traits to use and which methods and functions to call
+    from a crate, so each crate has documentation with instructions for using it. Another
+    neat feature of Cargo is that running the cargo doc --open command will build
+    documentation provided by all your dependencies locally and open it in your browser.
+    If you’re interested in other functionality in the rand crate, for example, run cargo
+    doc --open and click rand in the sidebar on the left.
+*/
+// *************************************************************************************
+
+// --------------------- Comparing the Guess to the Secret Number -------------------------
+/*
+use std::cmp::Ordering;
+use std::io;
+
+use rand::Rng;
+
+fn main() {
+    println!("Guess the number game starts!");
+
+    let mut guess = String::new();
+
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Failed to read line");
+
+    let secret_number = rand::thread_rng().gen_range(1..=100);
+
+    println!("The Secret number is: {secret_number}");
+    println!("Input your guess");
+    println!("You guessed: {guess}");
+
+
+    match guess.cmp(&secret_number){
+        Ordering::Less    => println!("Your guess is too small :( "),
+        Ordering::Greater => println!("Your guess is too large :( "),
+        Ordering::Equal   => println!("You got it!!!"),
+    }
+}
+*/
+
+
+// Updates from the code above
+// We utilized use again to call std::cmp::Ordering into scope from the standard library
+
+// The Ordering type is another enum and has the variants Less, Greater, and Equal. These
+// are the three outcomes that are possible when you compare two values.
+
+// we add five new lines at the bottom that use the Ordering type. The cmp method compares
+// two values and can be called on anything that can be compared. It takes a reference to
+// whatever you want to compare with: Here, it’s comparing guess to secret_number. Then,
+// it returns a variant of the Ordering enum we brought into scope with the use statement.
+// We use a match expression to decide what to do next based on which variant of Ordering
+// was returned from the call to cmp with the values in guess and secret_number.
+
+// A match expression is made up of arms. An arm consists of a pattern to match against,
+// and the code that should be run if the value given to match fits that arm’s pattern. Rust
+// takes the value given to match and looks through each arm’s pattern in turn.
+
+// Let’s walk through an example with the match expression we use here. Say that the user
+// has guessed 50 and the randomly generated secret number this time is 38.
+
+// When the code compares 50 to 38, the cmp method will return Ordering::Greater because
+// 50 is greater than 38. The match expression gets the Ordering::Greater value and starts
+// checking each arm’s pattern. It looks at the first arm’s pattern, Ordering::Less, and
+// sees that the value Ordering::Greater does not match Ordering::Less, so it ignores the
+// code in that arm and moves to the next arm. The next arm’s pattern is Ordering::Greater,
+// which does match Ordering::Greater! The associated code in that arm will execute and
+// print Too big! to the screen. The match expression ends after the first successful match,
+// so it won’t look at the last arm in this scenario.
+
+// However, the code above produces an error if you try to compile it (try cargo build)
+
+// The core of the error states that there are mismatched types. Rust has a strong, static
+// type system. However, it also has type inference. When we wrote
+// let mut guess = String::new(), Rust was able to infer that guess should be a String
+// and didn’t make us write the type. The secret_number, on the other hand, is a number type.
+// A few of Rust’s number types can have a value between 1 and 100: i32, a 32-bit number;
+// u32, an unsigned 32-bit number; i64, a 64-bit number; as well as others. Unless otherwise
+// specified, Rust defaults to an i32, which is the type of secret_number unless you add
+// type information elsewhere that would cause Rust to infer a different numerical type.
+// The reason for the error is that Rust cannot compare a string and a number type.
+
+// Ultimately, we want to convert the String the program reads as input into a number type
+// so that we can compare it numerically to the secret number. We do so by adding one line
+// to the main function body
+
+
+
+
+/*
+use std::cmp::Ordering;
+use std::io;
+
+use rand::Rng;
+
+fn main() {
+    println!("Guess the number game starts!");
+
+    let mut guess = String::new();
+
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Failed to read line");
+
+
+    let guess : u32 = guess.trim().parse().expect("Please type a number!");
+
+    let secret_number = rand::thread_rng().gen_range(1..=100);
+
+    println!("The Secret number is: {secret_number}");
+    println!("Input your guess");
+    println!("You guessed: {guess}");
+
+
+    match guess.cmp(&secret_number){
+        Ordering::Less    => println!("Your guess is too small :( "),
+        Ordering::Greater => println!("Your guess is too large :( "),
+        Ordering::Equal   => println!("You got it!!!"),
+    }
+}
+*/
+
+
+
+// The line we added is 
+/*
+    let guess : u32 = guess.trim().parse().expect("Please type a number!");
+*/
+
+// We create a variable named guess. But wait, doesn’t the program already have a variable
+// named guess? It does, but helpfully Rust allows us to shadow the previous value of guess
+// with a new one. Shadowing lets us reuse the guess variable name rather than forcing us
+// to create two unique variables, such as guess_str and guess, for example. We’ll cover
+// this later, but for now, know that this feature is often used
+// when you want to convert a value from one type to another type.
+
+
+
+// Now let's dissect that line we just added
+// We bind this new variable to the expression guess.trim().parse(). The guess in the
+// expression refers to the original guess variable that contained the input as a string.
+// The trim method on a String instance will eliminate any whitespace at the beginning
+// and end, which we must do before we can convert the string to a u32, which can only
+// contain numerical data. The user must press enter to satisfy read_line and input their
+// guess, which adds a newline character to the string. For example, if the user types 5
+// and presses enter, guess looks like this: 5\n. The \n represents “newline.”
+// (On Windows, pressing enter results in a carriage return and a newline, \r\n.)
+// The trim method eliminates \n or \r\n, resulting in just 5.
+
+// The parse method on strings converts a string to another type. Here, we use it to
+// convert from a string to a number. We need to tell Rust the exact number type we want
+// by using let guess: u32. The colon (:) after guess tells Rust we’ll annotate the
+// variable’s type. Rust has a few built-in number types; the u32 seen here is an
+// unsigned, 32-bit integer. It’s a good default choice for a small positive number
+
+// Additionally, the u32 annotation in this example program and the comparison with
+// secret_number means Rust will infer that secret_number should be a u32 as well.
+// So, now the comparison will be between two values of the same type!
+
+// The parse method will only work on characters that can logically be converted into numbers
+// and so can easily cause errors. If, for example, the string contained A👍%, there would be
+// no way to convert that to a number. Because it might fail, the parse method returns a Result
+// type, much as the read_line method does (discussed earlier in “Handling Potential Failure
+// with Result”). We’ll treat this Result the same way by using the expect method again.
+// If parse returns an Err Result variant because it couldn’t create a number from the
+// string, the expect call will crash the game and print the message we give it. If parse
+// can successfully convert the string to a number, it will return the Ok variant of Result,
+// and expect will return the number that we want from the Ok value.
+
+
+// So far, the user can only make one guess. Let's change that by adding a loop
+
+/*
+use std::cmp::Ordering;
+use std::io;
+
+use rand::Rng;
+
+fn main() {
+    println!("Guess the number game starts!");
+
+    let secret_number = rand::thread_rng().gen_range(1..=100);
+
+
+    // println!("The Secret number is: {secret_number}");
+    // println!("Input your guess");
+    // println!("You guessed: {guess}");
+
+    loop {
+            println!("Input your guess:");
+            let mut guess = String::new();
+
+            io::stdin()
+                .read_line(&mut guess)
+                .expect("Failed to read line");
+
+
+            let guess : u32 = guess.trim().parse().expect("Please type a number!");
+
+                match guess.cmp(&secret_number){
+                    Ordering::Less    => println!("Your guess is too small :( -- Try again:"),
+                    Ordering::Greater => println!("Your guess is too large :( -- Try again:"),
+                    Ordering::Equal   => {
+                        println!("You got it!!!");
+                        break;
+                    }
+            }
+    }
+}
+*/
+
+
+
+// --------------------------- Handling Invalid Input ---------------------------
+// To further refine the game’s behavior, rather than crashing the program when the user
+// inputs a non-number, let’s make the game ignore a non-number so that the user can
+// continue guessing. We can do that by altering the line where guess is converted from
+// a String to a u32
+
+
+use std::cmp::Ordering;
+use std::io;
+
+use rand::Rng;
+
+fn main() {
+    println!("Guess the number game starts!");
+
+    let secret_number = rand::thread_rng().gen_range(1..=100);
+
+
+    // println!("The Secret number is: {secret_number}");
+    // println!("Input your guess");
+    // println!("You guessed: {guess}");
+
+    loop {
+            println!("Input your guess:");
+            let mut guess = String::new();
+
+            io::stdin()
+                .read_line(&mut guess)
+                .expect("Failed to read line");
+
+
+            let guess : u32 = match guess.trim().parse(){
+                Ok(num) => num,                // arm 1 of the match
+                Err(_)  => continue,           // arm 2 of the match
+            };
+
+                match guess.cmp(&secret_number){
+                    Ordering::Less    => println!("Your guess is too small :( -- Try again:"),
+                    Ordering::Greater => println!("Your guess is too large :( -- Try again:"),
+                    Ordering::Equal   => {
+                        println!("You got it!!!");
+                        break;
+                    }
+            }
+    }
+}
+
+
+// To understand the change, note that parse() method is responsible for converting a string 
+// into the annotated type (which is u32 in this case). Also Remember that parse returns a
+// Result type and Result is an enum that has the variants Ok and Err. We’re using a match
+// expression here, as we did with the Ordering result of the cmp method.
+
+// If parse is able to successfully turn the string into a number, it will return an Ok
+// value that contains the resultant number. That Ok value will match the first arm’s
+// pattern, and the match expression will just return the num value that parse produced
+// and put inside the Ok value. That number will end up right where we want it in the new
+// guess variable we’re creating.
+
+// If parse is not able to turn the string into a number, it will return an Err value that
+// contains more information about the error. The Err value does not match the Ok(num)
+// pattern in the first match arm, but it does match the Err(_) pattern in the second arm.
+// The underscore, _, is a catch-all value; in this example, we’re saying we want to match
+// all Err values, no matter what information they have inside them. So, the program will
+// execute the second arm’s code, continue, which tells the program to go to the next
+// iteration of the loop and ask for another guess. So, effectively, the program ignores
+// all errors that parse might encounter!
+
