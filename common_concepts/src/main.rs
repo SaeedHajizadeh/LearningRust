@@ -428,7 +428,7 @@ fn main(){
 // Functions in rust are declared by the fn keyword
 // Rust code uses snake case as the conventional style for function and variable names,
 // in which all letters are lowercase and underscores separate words. 
-
+/*
 fn main() {
     println!("Hello, world!");
 
@@ -438,10 +438,113 @@ fn main() {
 fn another_function() {
     println!("Another function.");
 }
-
+*/
 
 
 // Note that we defined another_function *after* the main function in the source code;
 // we could have defined it before as well. Rust doesn’t care where you define your
 // functions, only that they’re defined somewhere in a scope that can be seen by the caller.
 
+// ------------------------------- Parameters ------------------------------------
+// In function signatures, you must declare the type of each parameter. This is a
+// deliberate decision in Rust’s design: Requiring type annotations in function
+// definitions means the compiler almost never needs you to use them elsewhere in
+// the code to figure out what type you mean. The compiler is also able to give
+// more-helpful error messages if it knows what types the function expects.
+/*
+
+use std::io;
+fn main(){
+    let x = 5;
+    let y = 3;
+
+    add(x , y);
+
+    println!("Please enter your name:");
+    let mut name = String::new();
+    io::stdin().read_line(&mut name).expect("Failed to read line!");
+
+    println!("Please enter your age:");
+    let mut age = String::new();
+    io::stdin().read_line(&mut age).expect("Failed to read line!");
+    let age: i32 = age.trim().parse().expect("Age entered was not a number");
+    
+    show_name_age(name , age);
+}
+
+fn add(x: i32 , y: i32){
+    let sum = x + y;
+    println!("The sum of {x} and {y} is {sum}");
+}
+
+fn show_name_age(name: String , age: i32){
+    println!("Your name is {name} and you are {age} years old!!!")
+}
+
+*/
+
+
+
+
+// ------------------------- Statements and Expressions -----------------------------
+/*
+    Statements are instructions that perform some action and do not return a value.
+    Expressions evaluate to a resultant value.
+*/
+
+// Function definitions are also statements; the entire preceding example is a
+// statement in itself.
+
+// Calling a function is not an statement, though.
+
+// Statements do not return values. Therefore, you can’t assign a let statement to
+// another variable, as the following code tries to do; you’ll get an error:
+/*
+    fn main() {
+    let x = (let y = 6);
+}
+*/
+
+/*
+    The let y = 6 statement does not return a value, so there isn’t anything for x
+    to bind to. This is different from what happens in other languages, such as
+    C and Ruby, where the assignment returns the value of the assignment. In those
+    languages, you can write x = y = 6 and have both x and y have the value 6;
+    that is not the case in Rust.
+*/
+
+// Expressions evaluate to a value and make up most of the rest of the code that
+// you’ll write in Rust. Consider a math operation, such as 5 + 6, which is an
+// expression that evaluates to the value 11.
+
+// Examples of expressions
+// Calling a function is an expression.
+// Calling a macro is an expression.
+// A new scope block created with curly brackets is an expression, 
+
+// Try to guess what the value of y will be in the following code
+
+fn main(){
+    let y = {
+        let x = 3;
+        x + 1
+    };
+
+    println!("The value of y is {y}");
+}
+
+
+
+
+/*
+    {
+    let x = 3;
+    x + 1
+}
+
+    is a block that evaluates to 4
+*/
+
+
+
+// --------------------------- Functions with Return Values -----------------------------
