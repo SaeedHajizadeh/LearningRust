@@ -523,6 +523,7 @@ fn show_name_age(name: String , age: i32){
 // A new scope block created with curly brackets is an expression, 
 
 // Try to guess what the value of y will be in the following code
+/*
 
 fn main(){
     let y = {
@@ -533,6 +534,7 @@ fn main(){
     println!("The value of y is {y}");
 }
 
+*/
 
 
 
@@ -545,6 +547,85 @@ fn main(){
     is a block that evaluates to 4
 */
 
+/*
+    Expressions do not include ending semicolons. If you add a semicolon to the end of
+    an expression, you turn it into a statement, and it will then not return a value.
+    Keep this in mind as you explore function return values and expressions next.
+*/
 
 
 // --------------------------- Functions with Return Values -----------------------------
+/*
+    1. we must declare their type after an arrow (->)
+    2. In Rust, the return value of the function is synonymous with the value of the final
+       expression in the block of the body of a function.
+    3. You can return early from a function by using the return keyword and specifying a
+       value, but most functions return the last expression implicitly.
+*/
+
+// Write a program that receives two numbers and multiples them
+
+use std::io;   // we need stdin() from here
+
+fn five() -> i32{
+    5       // notice there is NO semicolon after 5 so the function implicitly returns 5
+}
+
+fn plus_one(x: i32) -> i32 {
+    x + 1
+}
+
+
+fn multiply(x: f32 , y: f32) -> f32 {
+    return x * y;
+}
+
+
+fn main(){
+    println!("Please enter two numbers to multiply!");
+    println!("Please enter the first number:");
+    let mut x = String::new();
+
+    io::stdin().read_line(&mut x).expect("Failed to read line!");
+    let x: f32 = x.trim().parse().expect("Please type a number!");
+
+    println!("Please enter the second number:");
+    let mut y = String::new();
+
+    io::stdin().read_line(&mut y).expect("Failed to read line!");
+    let y: f32 = y.trim().parse().expect("Please enter a number!");
+
+    let z = multiply(x , y);
+
+    println!("The multiplication of {x} and {y} is {z}");
+
+    let t = five();
+    println!("The value the function five() returns is {t}");
+
+    let x = plus_one(5);
+    println!("The value of x is: {x}");
+}
+
+
+// Now let us add a semicolon at the end of x + 1 in the plus_one function above
+
+/*
+fn main() {
+    let x = plus_one(5);
+
+    println!("The value of x is: {x}");
+}
+
+fn plus_one(x: i32) -> i32 {
+    x + 1;                returns an error
+}
+*/
+
+
+// A note on the last function plus_one above: if we put a semicolon at the end after x,
+// the program returns an error. The main error message, mismatched types, reveals the
+// core issue with this code. The definition of the function plus_one says that it will
+// return an i32, but statements don’t evaluate to a value, which is expressed by (),
+// the unit type. Therefore, nothing is returned, which contradicts the function
+// definition and results in an error.
+
