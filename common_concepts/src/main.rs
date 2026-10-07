@@ -564,7 +564,7 @@ fn main(){
 */
 
 // Write a program that receives two numbers and multiples them
-
+/*
 use std::io;   // we need stdin() from here
 
 fn five() -> i32{
@@ -605,7 +605,7 @@ fn main(){
     let x = plus_one(5);
     println!("The value of x is: {x}");
 }
-
+*/
 
 // Now let us add a semicolon at the end of x + 1 in the plus_one function above
 
@@ -629,3 +629,176 @@ fn plus_one(x: i32) -> i32 {
 // the unit type. Therefore, nothing is returned, which contradicts the function
 // definition and results in an error.
 
+
+// ---------------------------- Control Flow ------------------------------------
+// A simple if statement
+
+/*
+fn main() {
+    let number = 3;
+
+    if number < 5{
+        println!("The number is less than 5");
+    }
+    else if number == 5{
+        println!("The number is equal to 5");
+    }
+    else{
+        println!("The number is greater than 5");
+    }
+}
+*/
+
+// Rust does not evaluate non-zero values as true and a zero value as false, like Python
+
+// ----------------------------- Using if in a let Statement --------------------------
+// Suppose we want to implement a ReLU (rectified linear unit) function, common in deep learning
+/*
+fn relu(x: f32) -> f32 {
+    let result = if x > 0.0 {x} else {0.0};
+    return result;
+}
+
+fn main() {
+    let x = -3.5;
+    let y = 2.2;
+
+    let relu_x = relu(x);
+    let relu_y = relu(y);
+
+    println!("The ReLU of {x} is {relu_x}");
+    println!("The ReLU of {y} is {relu_y}");
+}
+    */
+
+
+
+
+// ----------------------------- Loops --------------------------------------------
+/*
+fn main() {
+    loop {
+        println!("This is an infinite loop!");
+    }
+}
+*/
+// You can only stop the infinite loop by pressing Ctrl + C in the terminal.
+// You can also use the break statement to exit a loop, as shown below:
+
+
+
+// ----------------------------- Returning Values from Loops ----------------------------
+// One of the uses of a loop is to retry an operation you know might fail until it does not
+// You might also need to pass the result of that operation out of the loop to the rest of
+// your code. To do this, you can add the value you want returned after the break expression
+// you use to stop the loop;
+/*
+fn main() {
+    let mut counter = 0;
+
+    let result = loop {
+        if counter == 10 {
+            break counter * 2;  // break with a value returned
+        }
+        counter += 1;
+    };
+    println!("The result is: {result}");
+}
+*/
+
+// After the loop, we use a semicolon to end the statement that assigns the value to result.
+
+// ----------------------------- Loop Labels -------------------------------------
+// You can disambiguate between multiple loops by using loop labels.
+/*
+fn main() {
+    let mut count = 0;
+    'counting_up: loop {
+        println!("count = {count}");
+        let mut remaining = 10;
+
+        loop {
+            println!("remaining = {remaining}");
+            if remaining == 9 {
+                break;
+            }
+            if count == 2 {
+                break 'counting_up;
+            }
+            remaining -= 1;
+        }
+
+        count += 1;
+    }
+    println!("End count = {count}");
+}
+*/
+// Question: Write a program that uses a loop to find the first number divisible by 7 and
+// 13 greater than 1000. Use a loop label to break out of the loop when the number is found.
+/*
+fn main() {
+    let mut counter = 1001;
+
+    'find_number: loop {
+        if (counter % 7 == 0) && (counter % 17 == 0) {
+            println!("The first number greater than 1000 that is divisible by 7 and 17 is: {counter}");
+            break 'find_number;
+        };
+        counter += 1;
+    }
+}
+*/
+
+
+
+// ----------------------------- While Loops -------------------------------------
+/*
+fn main() {
+    let mut number = 12;
+
+    while number != 0 {
+        println!("number is still {number} > 0.");
+        number -= 1; 
+    };
+}
+*/
+
+
+
+// ------------------------ Looping Through a Collection with for --------------------------
+// You can loop through the elements or using indices
+/*
+fn main() {
+    let a = [10 , 20 , 30 , 40 , 50];
+
+    for element in a {
+        println!("The value of the element is: {element}");
+    };
+
+    let mut index = 0;
+    while index < a.len() {
+        println!("The value of the element at index {index} is {}", a[index]);
+        index += 1;
+    }
+}
+*/
+
+
+
+
+
+// The safety and conciseness of for loops make them the most commonly used loop
+// construct in Rust. Even in situations in which you want to run some code a certain
+// number of times, as in the countdown example that used a while loop in Listing 3-3,
+// most Rustaceans would use a for loop.
+
+// Countdown and Countup example using a for loop
+fn main() {
+    for number in (1..4).rev() {
+        println!("Countdown: {number}");
+    }
+
+    for number in 1..4 {
+        println!("Countup: {number}");
+    }
+}
