@@ -368,3 +368,447 @@ fn calculate_length(s: String) -> (String, usize) {
 // references.
 
 
+// -------------------------- References and Borrowing -------------------------
+// The issue with the tuple code in Listing 4-5 is that we have to return the String to
+// the calling function so that we can still use the String after the call to
+// calculate_length, because the String was moved into calculate_length. Instead, we can
+// provide a reference to the String value. A reference is like a pointer in that it’s an
+// address we can follow to access the data stored at that address; that data is owned by
+// some other variable. Unlike a pointer, a reference is guaranteed to point to a valid
+// value of a particular type for the life of that reference.
+
+// Here is how to pass a reference to the calculate_length function rather than passing
+// ownership of the String:
+/*
+fn main() {
+    let s1 = String::from("Saeed");
+
+    let len = calculate_length(s1); // &s1 is a reference to s1
+    println!("The length of '{s1}' is {len}."); // This will print "The length of 'Saeed' is 5."
+}
+
+fn calculate_length(s: String) -> usize { // s is a reference to a String
+    s.len() // len() returns the length of a String; this returns s's length
+}  // Here, s goes out of scope. But because s does not have ownership of what
+  // it refers to, the String is not dropped.
+*/
+
+
+
+// Notice that instead of using the tuple we are using the referencing operator & to pass
+// a reference to the String value. Here, s is a reference to the owner of the String value s1
+
+// Note: The opposite of referencing by using & is dereferencing, which is accomplished with
+// the dereference operator, *.
+
+
+// The &s1 syntax lets us create a reference that refers to the value of s1 but does not own
+// it. Because the reference does not own it, the value it points to will not be dropped
+// when the reference stops being used.
+
+
+
+
+// The scope of a referenced function parameter is the same as the scope of the function body.
+// However, here since s does not own the value it refers to, the value will not be dropped
+// when s goes out of scope. We also do not need to return the String value from the function,
+// because we did not have the ownership of the String value in the first place. 
+// We call the action of creating a reference borrowing.
+// So what happens if we try to modify the value we are borrowing? 
+
+/*
+fn main() {
+    let s = String::from("Saeed");
+
+    change(s); // &s is a reference to s
+}
+
+fn change(some_string: &String) {
+    some_string.push_str(" Hajizadeh"); // This will cause a compile-time error
+}
+*/
+
+
+// ------------------ Mutable References -------------------------
+// The code above will not compile because we are trying to modify a value through an
+// immutable reference. By default, references are immutable, meaning that you cannot
+// change the value they refer to. If we want to allow a reference to be mutable,
+// we can use the mut keyword to declare a mutable reference:
+/*
+
+fn main() {
+    let mut s = String::from("Saeed");
+
+    change(&mut s); // &s is a reference to s
+}
+
+fn change(some_string: &mut String) {
+    some_string.push_str(" Hajizadeh"); // This will cause a compile-time error
+}
+
+*/
+
+// Here are the changes to the code above:
+/*
+    1. We chaneg s to be mutable by using the mut keyword.
+    2. When we call the function change, we pass a mutable reference to s by using &mut s.
+    3. We change the type of the reference in the function signature (definition) to be a
+       mutable reference
+*/
+
+// This makes it very clear that change function will mutate the value it borrows.
+
+
+
+// Mutable references have one big restriction: If you have a mutable reference to a
+// value, you can have no other references to that value. This code that attempts to
+// create two mutable references to s will fail. The following code will not compile:
+/*
+     let mut s = String::from("hello");
+
+    let r1 = &mut s;
+    let r2 = &mut s;
+
+    println!("{r1}, {r2}");
+*/
+
+// This error says that this code is invalid because we cannot borrow s as mutable more
+// than once at a time. The first mutable borrow is in r1 and must last until it’s used
+// in the println!, but between the creation of that mutable reference and its usage,
+// we tried to create another mutable reference in r2 that borrows the same data as r1.
+
+// The restriction preventing multiple mutable references to the same data at the same
+// time allows for mutation but in a very controlled fashion. This prevents data races
+// at compile time. A data race is similar to a race condition and happens in one of the
+// following three situations:
+    // 1. Two or more pointers access the same data at the same time.
+    // 2. At least one of the pointers is being used to write to the data.
+    // 3. There’s no mechanism being used to synchronize access to the data.
+
+// Data races cause undefined behavior and can be difficult to diagnose and fix when
+// you’re trying to track them down at runtime; Rust prevents this problem by refusing
+// to compile code with data races!
+
+// As always, we can use curly brackets to create a new scope, allowing for multiple
+// mutable references, just not simultaneous ones:
+
+/*
+      let mut s = String::from("hello");
+
+    {
+        let r1 = &mut s;
+    } // r1 goes out of scope here, so we can make a new reference with no problems.
+
+    let r2 = &mut s;
+*/
+
+// Rust enforces a similar rule for combining mutable and immutable references. This
+// code results in an error:
+
+/*
+    let mut s = String::from("hello");
+
+    let r1 = &s; // no problem
+    let r2 = &s; // no problem
+    let r3 = &mut s; // BIG PROBLEM
+
+    println!("{r1}, {r2}, and {r3}");
+*/
+
+ // Next example
+/*
+     let mut s = String::from("hello");
+
+    let r1 = &s; // no problem
+    let r2 = &s; // no problem
+    println!("{r1} and {r2}");
+    // Variables r1 and r2 will not be used after this point.
+
+    let r3 = &mut s; // no problem
+    println!("{r3}");
+*/
+
+
+
+// In languages with pointers, it’s easy to erroneously create a dangling pointer—a
+// pointer that references a location in memory that may have been given to someone
+// else—by freeing some memory while preserving a pointer to that memory. In Rust,
+// by contrast, the compiler guarantees that references will never be dangling
+// references: If you have a reference to some data, the compiler will ensure that
+// the data will not go out of scope before the reference to the data does.
+
+
+// The following code will give you a compile-time error
+
+/*
+    fn main() {
+    let reference_to_nothing = dangle();
+}
+
+fn dangle() -> &String { // dangle returns a reference to a String
+
+    let s = String::from("hello"); // s is a new String
+
+    &s // we return a reference to the String, s
+} // Here, s goes out of scope and is dropped, so its memory goes away.
+  // Danger!
+
+*/
+
+
+// The problem is that the String s is created inside the function dangle and will be
+// dropped once the function ends. However, we are returning a reference to that String,
+// which will be pointing to invalid/free memory. Rust prevents this situation from
+// happening by refusing to compile the code.
+
+
+// ---------------------------------------------------------------------------
+// --------------------------- The Slice Type -------------------------
+// ---------------------------------------------------------------------------
+// Slices let you reference a contiguous sequence of elements in a collection. A slice
+// is a kind of reference, so it does not have ownership.
+
+
+// A programming challenge:
+// Write a function that takes a string of words separated by spaces and returns the
+// first word it finds in that string. If the function doesn’t find a space in the
+// string, the whole string must be one word, so the entire string should be returned.
+
+// Let's first try to write this function using the String type. We will call this
+// function first_word. This will make it clear why we need to use slices instead of
+// the String type.
+
+// fn first_word(s: &String) -> ?
+
+// A few comments already:
+// 1. We do not need to take ownership of the String, so we use a reference 
+// 2. We need to return a value that is part of the input String but we still do not know
+//    what type to use for a "part" of a String. 
+// 3. One way is to return the index of the end of the first word
+
+/*
+
+fn first_word(s: &String) -> usize {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return i;
+        }
+    }
+
+    s.len()
+}
+
+*/
+// Because we need to go through the String element by element and check whether a value
+// is a space, we’ll convert our String to an array of bytes using the as_bytes method.
+/*
+     let bytes = s.as_bytes();
+*/
+
+// Next, we create an iterator over the array of bytes using the iter method:
+/*
+    for (i, &item) in bytes.iter().enumerate() 
+*/
+
+// For now, know that iter is a method that returns each element in a collection and that
+// enumerate wraps the result of iter and returns each element as part of a tuple instead.
+// The first element of the tuple returned from enumerate is the index, and the second
+// element is a reference to the element.
+
+
+// Because the enumerate method returns a tuple, we can use patterns to destructure that
+// tuple. We’ll be discussing patterns later.
+
+// In the for loop, we specify a pattern that has i for the index in the tuple and &item
+// for the single byte in the tuple. Because we get a reference to the element from
+// .iter().enumerate(), we use & in the pattern. that is
+/*
+    for (i , &\item) in s.iter().enumerate() ...
+*/
+
+// Inside the for loop, we search for the byte that represents the space by using the byte
+// literal syntax. If we find a space, we return the position. Otherwise, we return the
+// length of the string by using s.len().
+
+// There are two problems with this approach
+// 1. We are returning a usize on its own, whereas it is only a meaningful value in the
+//    context of the &String. If we set the string to "" after returning the usize value,
+//    the usize is still active whereas the String is now a different value
+// 2. If we are looking for the, say, second word in s, then the output must look like 
+//    (usize, usize) making it more complex
+
+// Rust has a solution to this problem
+
+// ---------------------------------- String Slices ---------------------------------------
+// A string slice is a reference to a contiguous sequence of the elements of a String
+// A String slice looks like this
+/*
+
+    let s = String::from("Saeed Hajizadeh");
+
+    let Saeed = &s[1..5];
+    let Hajizadeh = &s[6..15];
+
+*/
+// We create slices using a range within square brackets by specifying
+// [starting_index..ending_index], where starting_index is the first position in the slice
+// and ending_index is one more than the last position in the slice. Internally, the slice
+// data structure stores the starting position and the length of the slice, which corresponds
+// to ending_index minus starting_index. So, in the case of let Hajizadeh = &s[6..15];,
+// Hajizadeh would be a slice that contains a pointer to the byte at index 6 of s with a
+// length value of 9.
+
+
+// Similar to Python, With Rust’s .. range syntax, if you want to start at index 0, you can
+// drop the value before the two periods. In other words, these are equal:
+
+/*
+    let s = String::from("hello");
+
+    let slice = &s[0..2];
+    let slice = &s[..2];
+*/
+
+// By the same token, if your slice includes the last byte of the String, you can drop
+// the trailing number. The following slices are equal
+
+/*
+    let s = String::from("hello");
+
+    let len = s.len();
+
+    let slice = &s[3..len];
+    let slice = &s[3..];
+*/
+
+
+// With all this information in mind, let’s rewrite first_word to return a slice.
+/*
+fn first_word(s: &String) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i , &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+    &s[..]           // If there is not a single space, return the entire String
+}
+*/
+
+
+// Now the entire program in one place
+/*
+
+fn first_word(s: &String) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i , &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+    &s[..]
+}
+
+fn  main() {
+    let mut s = String::from("Saeed Hajizadeh");
+
+    let word = first_word(&s);
+
+    s.clear();  // This is an error since there is a reference to s
+
+    println!("The first word is {word}");
+}
+
+*/
+// The reason for s.clear() to fail is that when clear needs to truncate the String, it
+// needs to get a mutable reference. Moreover, word is a mutable reference to s (&s[0..i])
+// so we have a mutable and an immutable reference to something at the same time and we saw
+// in ownership that this is a compile-time error
+
+/*
+    A *binary* (often called an executable) is a file containing compiled machine code that
+    a computer's CPU can execute directly. 
+*/
+
+// String literals are stored inside a compiled binary. We we define a string literal like below
+/*
+    let s = "Saeed Hajizadeh";
+*/
+
+// The type of the string literal s here is &str. It’s a slice pointing to that specific
+// point of the binary. This is also why string literals are immutable; &str is an
+// immutable reference.
+
+// One more improvement to first_word signature:
+// We can choose to use a &str type (slice type) as the parameter of the function in an 
+// effort to make it more robust as it allows us to use the same function on both &String
+// values and &str values.
+/*
+    fn first_word(s: &str) -> &str {
+*/
+
+
+// If we have a string slice, we can pass that directly. If we have a String, we can pass
+// a slice of the String or a reference to the String.
+
+
+// Defining a function to take a string slice instead of a reference to a String makes our
+// API more general and useful without losing any functionality:
+
+
+fn first_word(s: &str) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i , &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+    &s[..]
+}
+
+
+fn main() {
+    let my_string = String::from("Saeed Hajizadeh");
+
+    // `first_word` works on slices of `String`s, whether partial or whole.
+    let word = first_word(&my_string[0..6]);
+    println!("word: {word}");
+    let word = first_word(&my_string[..]);
+    println!("word: {word}");
+    // `first_word` also works on references to `String`s, which are equivalent
+    // to whole slices of `String`s.
+    let word = first_word(&my_string);
+    println!("word: {word}");
+
+    let my_string_literal = "Saeed Hajizadeh";
+
+    // `first_word` works on slices of string literals, whether partial or
+    // whole.
+    let word = first_word(&my_string_literal[0..6]);
+    println!("word: {word}");
+    let word = first_word(&my_string_literal[..]);
+    println!("word: {word}");
+
+    // Because string literals *are* string slices already,
+    // this works too, without the slice syntax!
+    let word = first_word(my_string_literal);
+    println!("word: {word}");
+}
+
+
+// ------------------------------- Other slices ---------------------------------
+// Array slices
+/*
+    let a = [1,2,3,4,5];
+    let slice = &a[1..3];
+    assert_eq!(slice , &[2 , 3]);
+*/
+
+
+// This slice has the type &[i32]. It works the same way as string slices do, by storing
+// a reference to the first element and a length.
