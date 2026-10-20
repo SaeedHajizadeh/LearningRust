@@ -271,7 +271,7 @@ fn value_in_cents(coin: Coin) -> u8 {
 // have this extra value. We can add this information to our enum by changing the Quarter
 // variant to include a UsState value stored inside it
 
-
+/*
 #[derive(Debug)]
 enum UsState {
     Alabama,
@@ -311,7 +311,7 @@ fn main() {
     println!("Coin 1 has value: {:?}", value1);
     println!("Coin 2 has value: {:?}", value2);
 }
-
+*/
 
 
 
@@ -322,7 +322,7 @@ fn main() {
 // value inside, adds 1 to that value. If there isn’t a value inside, the function
 // should return the None value and not attempt to perform any operations.
 
-
+/*
 fn plus_one(x: Option<i32>) -> Option<i32> {
     match x {
         None => None,
@@ -337,7 +337,7 @@ fn main() {
 
 
 }
-
+*/
 
 
 // Let’s examine the first execution of plus_one in more detail. When we call
@@ -428,40 +428,94 @@ fn reroll() {}
 // that match one pattern while ignoring the rest.
 
 
+// *** In Rust, 3u8 is an unsigned 8-bit integer literal with a value of 3 ***
+/*
+let config_max = Some(3u8);
+match config_max {
+    Some(max) => println!("The maximum is configured to be {max}"),
+    _ => (),
+}
+*/
 
 
 
+// In the code snippet above, if the value is Some, we print out the value in the
+// Some variant by binding the value to the variable max in the pattern. We don’t
+// want to do anything with the None value. To satisfy the match expression, we have
+// to add _ => () after processing just one variant, which is annoying boilerplate
+// code to add.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// nstead, we could write this in a shorter way using if let.
 
 /*
+let config_max = Some(3u8)
+if let Some(3u8) = config_max {
+    println!("The maximum is configured to be {max}");
+}
+*/
+
+
+// The syntax if let takes a pattern and an expression separated by an equal sign. It
+// works the same way as a match, where the expression is given to the match and the
+// pattern is its first arm. In this case, the pattern is Some(max), and the max binds
+// to the value inside the Some. We can then use max in the body of the if let block
+// in the same way we used max in the corresponding match arm. The code in the if let
+// block only runs if the value matches the pattern.
+
+
+// Using if let means less typing, less indentation, and less boilerplate code. However,
+// you lose the exhaustive checking match enforces that ensures that you aren’t forgetting
+// to handle any cases.
+
+
+// We can include an else with an if let. The block of code that goes with the else is
+// the same as the block of code that would go with the _ case in the match expression
+// that is equivalent to the if let and else.
+
+
+// The following two snippets are equivalent
+
+/*
+// 1. Using match
+let mut count = 0;
+match coin {
+    Coin::Quarter(state) => println!("State quarter from {state:?}!"),
+    _ => count += 1,
+}
+
+
+// 2. Using if let and else
+let mut count = 0;
+
+if let Coin::Quarter(state) = coin {
+    println!("State quarter from {state:?}!");
+}
+else {
+    count += 1;
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #[derive(Debug)]
 enum ThermostatMode {
     Cooling,
@@ -490,7 +544,20 @@ fn process_status(mode: &ThermostatMode, reading: SensorReading) -> String {
     // 4. Handle all remaining cases (like Humidity) with a wildcard `_` returning "Reading processed: {:?}".
 
     match reading {
-        // Your code here
+        // your code here
+        SensorReading::BatteryLow => String::from("Warning: Battery is low!"),
+        SensorReading::Error(msg) => {
+            let res = String::from("System Error:");
+            format!("{} {}" , res , msg)
+        },
+        SensorReading::Temperature(temp) => {
+            match mode {
+                ThermostatMode::Heating if temp < 20.0 => String::from("Heating active: boosting heat."),
+                ThermostatMode::Cooling if temp > 25.0 => String::from("Cooling active: lowering temp."),
+                _ => format!("Temperature nominal: {}C", temp),
+            }
+        },
+        _ => format!("Reading processed: {:?}", reading),
     }
 }
 
@@ -500,4 +567,3 @@ fn main() {
 
     println!("{}", process_status(&mode, reading));
 }
-*/
