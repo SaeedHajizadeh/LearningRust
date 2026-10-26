@@ -99,22 +99,27 @@ let row = vec![
 
 // String is actually implemented as a wrapper around a vector of bytes with some extra
 // guarantees, restrictions, and capabilities. Hence it is very similar to Vec<T>
-
+/*
 let mut s = String::new();
-
+*/
 // This line creates a new, empty string called s, into which we can then load data.
 
 
 // We can also use .to_string() method to create a String type
-
+/*
 let data = "Amber color";
 let s = data.to_string();
-
+*/
 // This also works
+
+/*
 let s = "Amber color".to_string();
+*/
 
 // We can also do
+/*
 let s = String::from("Amber color");
+*/
 
 
 // Remember that strings are UTF-8 encoded so the following also work
@@ -135,8 +140,11 @@ let s = String::from("Amber color");
 // ------------------------- Updating a String --------------------------------
 
 // Appending a string
+
+/*
 let mut s = String::from("hey there");
 s.push_str("!!!!!"); 
+*/
 
 
 // push_str does not take ownership
@@ -202,3 +210,222 @@ for b in "Зд".bytes() { println!("{b}"); }   // 208, 151, 208, 180
 s.contains("ab");
 s.replace("old", "new");
 */
+
+
+
+// --------------------------------- Hash maps ---------------------------------------------
+
+
+// ------------------------- Storing Keys with Associated Values in Hash Maps -----------------------
+// Hash map is the Type HashMap<K , V> where the key has Type K and the value has Type V
+
+// **************************************************************************************************
+// Hash maps maps keys to values using a *hash function* which determines the places these keys and
+// values are stored in the memory.
+// **************************************************************************************************
+
+
+// We’ll go over the basic API of hash maps in this section, but many more goodies are hiding in
+// the functions defined on HashMap<K, V> by the standard library. As always, check the standard
+// library documentation for more information.
+
+
+// --------------------------- Creating a new Hashmap -------------------------------------------
+/*
+use std::collections::HashMap;
+
+fn main() {
+    let mut scores = HashMap::new(); // empty hash map created
+
+    scores.insert(String::from("blue") , 10);   // (key , value) pairs added to the map
+    scores.insert("Yellos".to_string() , 11);  // (key , value) pairs added to the map
+
+    
+}
+*/
+
+// *****************************************************************************************************
+// Just like vectors, hash maps store their data on the heap
+// *****************************************************************************************************
+
+// Like vectors, hash maps are homogeneous: 
+// All of the keys must have the same type, and all of the values must have the same type.
+
+// ------------------------- Accessing values in a hash map -------------------------------------
+// In the code above let's say we want to access to team Blue's score
+/*
+use std::collections::HashMap;
+
+fn main() {
+    let mut scores = HashMap::new();
+
+    scores.insert(String::from("Blue") , 10);
+    scores.insert(String::from("Yellow") , 11);
+
+    let team = String::from("Blue");
+
+    let score = scores.get(&team).copied().unwrap_or(0);
+}
+*/
+
+// The .get() method returns an Option<&V>; Remember Option<&V> is an *enum* where it is
+// epresenting an optional shared reference to a value of type V. It is a binary option meaning
+// it is either Some(V) or None; if there’s no value for that key in the hash map, get will
+// return None. This program handles the Option by calling copied to get an Option<i32> rather
+// than an Option<&i32>, then unwrap_or to set score to zero if scores doesn’t have an entry
+// for the key.
+
+// Also note that we pass the team as a reference to the .get() method in order to preserve the team
+// Remember that not passing a reference, the .get() emthod receives the owenership so the variable
+// team is dropped after the completion of .get() method.
+// Having a score following running .get() method without the team associated with that score is not
+// particularly useful
+
+
+
+
+// Iterate over key, value pairs
+
+/*
+use std::collections::HashMap;
+
+fn main() {
+    let mut scores = HashMap::new();
+
+    scores.insert(String::from("Blue") , 10);
+    scores.insert(String::from("Yellow") , 11);
+
+    let team = String::from("Blue");
+
+    let score = scores.get(&team).copied().unwrap_or(0);
+
+    for (key , value) in &scores {
+        println!("{key} : {value}");
+    }
+}
+*/
+
+
+// --------------------------- Managing Ownership in Hash Maps -------------------------------
+// Remember that we said passing a value into a function moves the ownership and the value is
+// dropped after the function call. So if we add keys/values to a Hash and we want to KEEP them
+// afterwards, what should we do? For types that implement the Copy trait, like i32, the values
+// are copied into the hash map. For owned values like String, the values will be moved and the
+// hash map will be the owner of those values
+
+/*
+use std::collections::HashMap;
+
+    let field_name = String::from("Favorite color");
+    let field_value = String::from("Blue");
+
+    let mut map = HashMap::new();
+    map.insert(field_name, field_value);
+    // field_name and field_value are invalid at this point, try using them and
+    // see what compiler error you get!
+
+*/
+
+
+// If we insert references to values into the hash map, the values won’t be moved into the hash map.
+
+
+// ----------------------------- Updating a Hash Map -----------------------------------------
+// You could replace the old value with the new value, completely disregarding the old value.
+// You could keep the old value and ignore the new value, only adding the new value if the
+// key doesn’t already have a value. Or you could combine the old value and the new value.
+// Let’s look at how to do each of these!
+
+// ----------------------------- Overwriting a Value --------------------------------------
+// Simply insert the new value to the key 
+
+/*
+
+use std::collections::HashMap;
+
+fn main(){
+
+    let mut scores = HashMap::new();
+
+    scores.insert(String::from("Blue"), 10);
+    scores.insert(String::from("Blue"), 25);
+
+    println!("{scores:?}");
+}
+
+*/
+
+// {"Blue" : 50}
+
+
+// -------------------- Adding a Key and Value Only If a Key Isn’t Present -----------------------
+// Sometimes we need to only add a value if the key does not exist and if the key exists, no action
+// is taken. There is a special API for this called *entry* that takes the key you want to check as
+// a parameter. 
+
+/*
+
+use std::collections::HashMap;
+
+fn main() {
+    let mut scores = HashMap::new();
+    scores.insert(String::from("Blue"), 10);
+
+    scores.entry(String::from("Yellow")).or_insert(50);
+    scores.entry(String::from("Blue")).or_insert(50);
+    scores.entry(String::from("Blue")) , 50))
+    println!("{scores:?}");
+}
+
+*/
+// The code above takes the parameter of the entry and seaches for that amongs the keys of the HashMap
+// If the key does not exist, it associates the value in the or_insert(<value>) with that key.
+// Otherwise, status quo is preserved. 
+// The result is {"Yellow": 50, "Blue": 10}
+
+
+// -------------------------- Updating a Value Based on the Old Value- ------------------------------
+// Let's say we want to implement a word frequency and add the count each time we see a word (key) and
+// if a word has not been seen we insert 0
+
+use std::collections::HashMap;
+
+fn main() {
+    let text = "Learning Rust is really really really a fun process!";
+
+    let mut frequency_map = HashMap::new();
+
+    for word in text.split_whitespace() {
+        let count = frequency_map.entry(word).or_insert(0);
+        *count += 1;
+    }
+
+    // for (key , value) in &frequency_map {
+    //     println!("{key} : {value}");
+    // }
+
+    println!("{frequency_map:?}")
+}
+
+
+// Note: iterating over a hash map happens in an arbitrary order.
+// The split_whitespace method returns an iterator over subslices, separated by whitespace,
+// of the value in text.
+// The or_insert method returns a mutable reference (&mut V) to the value for the specified key.
+// Here, we store that mutable reference in the count variable, so in order to assign to that value,
+// we must first dereference count using the asterisk (*). The mutable reference goes out of scope at
+// the end of the for loop, so all of these changes are safe and allowed by the borrowing rules.
+
+
+// By default, HashMap uses a hashing function called SipHash that can provide resistance to
+// denial-of-service (DoS) attacks involving hash tables1. This is not the fastest hashing
+// algorithm available, but the trade-off for better security that comes with the drop in
+// performance is worth it. If you profile your code and find that the default hash function is
+// too slow for your purposes, you can switch to another function by specifying a different
+// hasher. A hasher is a type that implements the BuildHasher trait. We'll talk about traits
+// later. 
+
+// You don’t necessarily have to implement your own hasher from scratch; crates.io has
+// libraries shared by other Rust users that provide hashers implementing many common hashing algorithms.
+
+
