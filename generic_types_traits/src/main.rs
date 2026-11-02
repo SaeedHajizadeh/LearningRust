@@ -429,7 +429,7 @@ fn main() {
 
 // The monomorphized version of the code looks similar to the following (the compiler
 // uses different names than what we’re using here for illustration):
-
+/*
 enum Option_i32 {
     Some(i32),
     None,
@@ -444,3 +444,741 @@ fn main() {
     let integer = Option_i32::Some(5);
     let float = Option_f64::Some(5.0);
 }
+*/
+
+
+
+
+
+
+
+
+// ---------------------- Defining Shared Behavior with Traits -----------------------------
+// A trait defines the functionality a particular type has and can share with other types
+// We can use trait bounds to specify that a generic type can be any type that has certain behavior.
+
+// --------------------------- Defining a Trait ------------------------------------------
+// Definition: A trait is a named set of methods that a type can promise to implement. It
+// defines behavior that types can share, without saying how each type does it.
+
+
+// Example
+/*
+// 1. Define the trait: the "axioms"
+pub trait Shape {
+    fn area(&self) -> f64;  // required: every implementor must define it
+
+    fn describe(&self) -> String {   // default: free unless overridden
+        format!("A shape with area {:.2}", self.area())
+    }
+}
+
+
+
+// Types
+struct Circle { r:  f64 }
+struct Rect { w: f64 , h: f64 }
+
+
+// 3. Implement the trait for each type
+impl Shape for Circle {
+    // We are requried to implement area for circle
+    fn area(&self) -> f64 {
+        3.14159 * self.r * self.r
+    }
+}
+
+impl Shape for Rect {
+    fn area(&self) -> f64{
+        self.w * self.h
+    }
+
+    fn describe(&self) -> String {
+        format!("a {}x{} rectangle", self.w, self.h)  // overriden
+    }
+}
+
+
+// 4. Generic function with a trait bound: ∀T ∈ {Shapes}
+fn print_area<T: Shape>(s: &T) {
+    println!("{}", s.describe());
+}
+
+fn main() {
+    print_area(&Circle {r : 0.5});
+    print_area(&Rect {w: 5.0 , h: 4.0});
+}
+*/
+
+// Note the syntax: impl Shape for Circle means “Circle satisfies the Shape axioms.”
+// In that block, Self ≡ Circle, same rule as before: Self is the type after for
+
+
+/*
+    A good analogy (not fully) to traits is abstract classes in Python
+    from abc import ABC, abstractmethod
+
+    class Shape(ABC):
+        @abstractmethod
+        def area(self) -> float: ...          # required, like a trait method with no body
+
+        def describe(self) -> str:            # default, like a trait method with a body
+            return f"a shape with area {self.area():.2f}"
+
+    class Circle(Shape):
+        def __init__(self, r): self.r = r
+        def area(self): return 3.14159 * self.r ** 2
+*/
+
+
+
+
+// Let's have an example over two libraries. In one library, the "aggregator" library
+// we define the structs and methods and in the other we use it. We need these pub keywords
+// so that these traits and structs and their variants are available in other crates like
+// main.rs
+
+
+/*
+Here’s the full project, with every file’s contents.
+
+aggregator/                 ← package folder (cargo new aggregator)
+├── Cargo.toml
+└── src/
+    ├── lib.rs              ← library crate "aggregator"
+    └── main.rs             ← binary crate, uses the library
+*/
+
+
+/*
+Cargo.toml
+
+toml
+[package]
+name = "aggregator"      # ← this is where the name `aggregator` comes from
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+*/
+
+
+
+
+
+/*
+// src/lib.rs
+pub trait Summary {
+    fn summarize(&self) -> String;
+}
+
+pub struct NewsArticle {
+    pub headline: String,
+    pub location: String,
+    pub author: String,
+    pub content: String,
+}
+
+impl Summary for NewsArticle {
+    fn summarize(&self) -> String {
+        format!("{}, by {} ({})", self.headline, self.author, self.location)
+    }
+}
+
+pub struct SocialPost {
+    pub username: String,
+    pub content: String,
+    pub reply: bool,
+    pub repost: bool,
+}
+
+impl Summary for SocialPost {
+    fn summarize(&self) -> String {
+        format!("{}: {}", self.username, self.content)
+    }
+}
+
+
+// src/main.rs
+use aggregator::{SocialPost, Summary};
+
+fn main() {
+    let post = SocialPost {
+        username: String::from("horse_ebooks"),
+        content: String::from(
+            "of course, as you probably already know, people",
+        ),
+        reply: false,
+        repost: false,
+    };
+
+    println!("1 new post: {}", post.summarize());
+}
+*/
+
+
+// Then run cargo build and cargo run from inside aggregator/
+
+// Other crates that depend on the aggregator crate can also bring the Summary trait
+// into scope to implement Summary on their own types.
+
+// Consider a new package next to aggregator with one main crate
+/*
+projects/
+├── aggregator/             ← the package above
+└── my_app/                 ← a different package
+    ├── Cargo.toml          ← [dependencies] aggregator = { path = "../aggregator" }
+    └── src/
+        └── main.rs         ← use aggregator::Summary; impl Summary for MyOwnType { ... }
+
+*/
+
+
+// One restriction to note is that we can implement a trait on a type only if either
+// the trait or the type, or both, are local to our crate. For example, we can
+// implement standard library traits like Display on a custom type like SocialPost as
+// part of our aggregator crate functionality because the type SocialPost is local to
+// our aggregator crate. We can also implement Summary on Vec<T> in our aggregator
+// crate because the trait Summary is local to our aggregator crate.
+
+
+// But we can’t implement external traits on external types. For example, we can’t
+// implement the Display trait on Vec<T> within our aggregator crate, because Display
+// and Vec<T> are both defined in the standard library and aren’t local to our
+// aggregator crate. This restriction is part of a property called coherence, and
+// more specifically the orphan rule, so named because the parent type is not present.
+// This rule ensures that other people’s code can’t break your code and vice versa.
+
+
+// ------------------------ Using Default Implementations -------------------------------
+// As mentioned in the first example, sometimes we create an implementation of a method
+// inside a trait and if we need to override it for a particular type, we can choose to
+// do so. We saw one example on the Circle and Shape example
+
+
+// Example 2:
+/*
+
+pub trait Summary {
+    fn summarize_author(&self) -> String;
+
+    fn summarize(&self) -> String {
+        format!("(Read more from {}...)", self.summarize_author())
+    }
+}
+
+
+impl Summary for SocialPost {
+    fn summarize_author(&self) -> String {
+        format!("@{}", self.username)
+    }
+}
+
+
+    let post = SocialPost {
+        username: String::from("horse_ebooks"),
+        content: String::from(
+            "of course, as you probably already know, people",
+        ),
+        reply: false,
+        repost: false,
+    };
+
+    println!("1 new post: {}", post.summarize());
+
+
+*/
+
+// This code prints 1 new post: (Read more from @horse_ebooks...).
+
+
+// -------------------------- Using Traits as Parameters ------------------------------
+// We can explore how to use traits to define functions that accept many different types.
+
+// We’ll use the Summary trait we implemented on the NewsArticle and SocialPost types
+// in code below to define a notify function that calls the summarize method on its
+// item parameter, which is of some type that implements the Summary trait. To do this,
+// we use the *impl Trait* syntax, like this:
+
+/*
+pub fn notify(item: &impl Summary) {
+    println!("Breaking new {}", item.summarize());
+}
+*/
+
+// Instead of a concrete type for the item parameter, we specify the impl keyword and
+// the trait name. This parameter accepts any type that implements the specified trait.
+// In the body of notify, we can call any methods on item that come from the Summary
+// trait, such as summarize. We can call notify and pass in any instance of NewsArticle
+// or SocialPost. Code that calls the function with any other type, such as a String or
+// an i32, won’t compile, because those types don’t implement Summary.
+
+
+// -------------------------- Trait Bound Syntax --------------------------------------
+// The impl Trait syntax works for straightforward cases but is actually syntax sugar
+// for a longer form known as a trait bound; it looks like this:
+
+/*
+pub fn notify<T: Summary>(item: &T){
+    println!("Breaking new {}", item.summarize());
+}
+*/
+
+// This longer form is equivalent to the example in the previous section but is more
+// verbose. We place trait bounds with the declaration of the generic type parameter
+// after a colon and inside angle brackets.
+
+
+// The impl Trait is a simpler syntax that is good for simple cases, but if, say, we
+// have two parameters that implement Summary, our code using impl Trait looks like
+/*
+pub fn notify(item1: &impl Summary , item2: &impl Summary) {
+
+}
+*/
+// Using Trait bound syntax, if the two items have the same type, we can implement the
+// above as follows
+/*
+pub fn notify<T: Summary>(item1 : &T , item2: &T){}
+*/
+
+
+
+// ------------------- Multiple Trait Bounds with the + Syntax -----------------------
+
+// We can also specify more than one trait bound. Say we wanted notify to use display
+// formatting as well as summarize on item: We specify in the notify definition that
+// item must implement both Display and Summary. We can do so using the + syntax:
+
+
+// Using impl and Trait bounds, this + syntax is possible
+/*
+pub fn notify(item: &(impl Summary + Display)){}
+*/
+// Using Trait bound
+/*
+pub fn notify<T: Summary + Display>(item: &T){}
+*/
+// With the two trait bounds specified, the body of notify can call summarize and use
+// {} to format item.
+
+
+
+// ---------------------- Clearer Trait Bounds with where Clauses -----------------------------
+// Using too many trait bounds has its downsides. Each generic has its own trait bounds,
+// so functions with multiple generic type parameters can contain lots of trait bound
+// information between the function’s name and its parameter list, making the function
+// signature hard to read. For this reason, Rust has alternate syntax for specifying trait
+// bounds inside a where clause after the function signature. So, instead of writing this:
+
+/*
+pub fn some_function<T: Display + Clone , U: Clone + Debug>(t: &T, u: &U) -> i32 {}
+*/
+
+// We can use a where clause as in
+
+/*
+fn some_function<T , U>(t: &T, u: &U) -> i32
+where
+    T: Display + Clone,
+    U: Clone + Debug,
+    {}
+*/
+
+
+// -------------------------- Returning Types That Implement Traits --------------------------
+// We can also use the impl Trait syntax in the return position to return a value of some type
+// that implements a trait
+/*
+fn returns_summarize() -> impl Summary {
+    SocialPost {
+        username: String::from("horse_ebooks"),
+        content: String::from(
+            "of course, as you probably already know, people",
+        ),
+        reply: false,
+        repost: false,
+    }
+}
+*/
+
+// By using impl Summary for the return type, we specify that the returns_summarizable function
+// returns some type that implements the Summary trait without naming the concrete type.
+// In this case, returns_summarizable returns a SocialPost, but the code calling this function
+// doesn’t need to know that.
+
+// The ability to specify a return type only by the trait it implements is especially useful
+// in the context of closures and iterators, which we cover in Chapter 13. Closures and
+// iterators create types that only the compiler knows or types that are very long to
+// specify. The impl Trait syntax lets you concisely specify that a function returns some
+// type that implements the Iterator trait without needing to write out a very long type.
+
+
+// ------------- Using Trait Bounds to Conditionally Implement Methods ---------------------
+// By using a trait bound with an impl block that uses generic type parameters, we can
+// implement methods conditionally for types that implement the specified traits. For
+// example, the type Pair<T> in Listing 10-15 always implements the new function to return
+// a new instance of Pair<T> (recall from the “Method Syntax” section of Chapter 5 that
+// Self is a type alias for the type of the impl block, which in this case is Pair<T>).
+// But in the next impl block, Pair<T> only implements the cmp_display method if its inner
+// type T implements the PartialOrd trait that enables comparison and the Display trait
+// that enables printing.
+
+/*
+use std::format::Display;
+
+struct Pair<T> {
+    x: T,
+    y: T,
+}
+
+impl<T> Pair<T> {
+    fn new(x: T , y:T) -> Self {
+        Self { x , y }
+    }
+}
+
+impl<T: Display + PartialOrd> Pair<T> {
+    fn cmp_display(&self) {
+        if self.x >= self.y {
+            println!("The largest member is x = {}", self.x);
+        } else {
+            println!("The largest member is y = {}", self.y);
+        }
+    }
+}
+*/
+
+
+// *************************** blanket implementation *************************************
+// A blanket implementation in Rust is a way to implement a trait for all types that satisfy
+// a specific condition, using generic parameters. Instead of writing the same trait
+// implementation manually for every individual struct or enum, you write it once for any
+// type matching your bounds.
+
+
+// For example, the standard library implements the ToString trait on any type that implements
+// the Display trait. The impl block in the standard library looks similar to this code:
+/*
+impl<T: Display> ToString for T{
+    // ----- snip -----
+}
+*/
+
+
+
+// ------------------------ Validating References with Lifetimes ------------------------------
+// lifetimes ensure that references are valid as long as we need them to be.
+
+// every reference in Rust has a lifetime, which is the scope for which that reference is valid.
+// Most of the time, lifetimes are implicit and inferred, just like most of the time, types are
+// inferred. We are only required to annotate types when multiple types are possible. In a
+// similar way, we must annotate lifetimes when the lifetimes of references could be related in
+// a few different ways. Rust requires us to annotate the relationships using generic lifetime
+// parameters to ensure that the actual references used at runtime will definitely be valid.
+
+// This lifetime annootation is unique to Rust and might look unfamiliar to you.
+
+// ------------------------- Dangling References ----------------------------------------------
+// The main aim of lifetimes is to prevent dangling references, which, if they were allowed to
+// exist, would cause a program to reference data other than the data it’s intended to reference
+// Example:
+/*
+fn main() {
+    let r;
+
+    {
+        let x: i32 = 5;
+        r = &x;  // error: `x` does not live long enough
+    }
+
+    println!("r: {}", r); 
+}
+*/
+// The reason is that x will be out of scope when the inner scope ends at the end of the block
+// But r is still valid for the outer scope; because its scope is larger, we say that
+// it “lives longer.” If Rust allowed this code to work, r would be referencing memory that was
+// deallocated when x went out of scope, and anything we tried to do with r wouldn’t work
+// correctly. So, how does Rust determine that this code is invalid? It uses a borrow checker.
+
+
+// ------------------------------- The Borrow Checker ------------------------------------------
+// The Rust compiler has a borrow checker that compares scopes to determine whether all borrows
+// are valid. Let's look at the code above differently
+
+/*
+fn main() {
+    let r;                // ---------+-- 'a
+                          //          |
+    {                     //          |
+        let x = 5;        // -+-- 'b  |
+        r = &x;           //  |       |
+    }                     // -+       |
+                          //          |
+    println!("r: {r}");   //          |
+}                         // ---------+
+*/
+
+// Here, we’ve annotated the lifetime of r with 'a and the lifetime of x with 'b. As you can
+// see, the inner 'b block is much smaller than the outer 'a lifetime block. At compile time,
+// Rust compares the size of the two lifetimes and sees that r has a lifetime of 'a but that
+// it refers to memory with a lifetime of 'b. The program is rejected because 'b is shorter
+// than 'a: The subject of the reference doesn’t live as long as the reference.
+
+
+// One fix is to remove the inner scope so that x and r have the same lifetime
+
+
+// ------------------------- Generic Lifetimes in Functions --------------------------------
+// We’ll write a function that returns the longer of two string slices.
+/*
+fn main() {
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
+
+    let result = longest(string1.as_str(), string2);
+    println!("The longest string is {result}");
+}
+*/
+
+
+// Note that we want the function to take string slices, which are references, rather than
+// strings, because we don’t want the longest function to take ownership of its parameters.
+
+// If we were to write the function signature like below, it would not compile because Rust
+// would not know how the lifetimes of the references relate to each other. The compiler
+// would not be able to guarantee that the returned reference is valid for as long as the
+// input references are valid.
+
+/*
+fn longest(x: &str, y: &str) -> &str {
+    if x.len() > y.len() { x } else { y }
+}
+*/
+
+
+// The help text reveals that the return type needs a generic lifetime parameter on it
+// because Rust can’t tell whether the reference being returned refers to x or y.
+// Actually, we don’t know either, because the if block in the body of this function
+// returns a reference to x and the else block returns a reference to y!
+
+
+// The borrow checker can’t determine this either, because it doesn’t know how the
+// lifetimes of x and y relate to the lifetime of the return value. To fix this error,
+// we’ll add generic lifetime parameters that define the relationship between the
+// references so that the borrow checker can perform its analysis.
+
+
+// -------------------------- Lifetime Annotation Syntax -------------------------------
+// Lifetime annotations don’t change how long any of the references live. Rather, they
+// describe the relationships of the lifetimes of multiple references to each other
+// without affecting the lifetimes. Just as functions can accept any type when the
+// signature specifies a generic type parameter, functions can accept references with
+// any lifetime by specifying a generic lifetime parameter.
+
+
+// Lifetime annotations have a slightly unusual syntax: The names of lifetime parameters
+// must start with an apostrophe (') and are usually all lowercase and very short, like
+// generic types. Most people use the name 'a for the first lifetime annotation. We
+// place lifetime parameter annotations after the & of a reference, using a space to
+// separate the annotation from the reference’s type.
+
+
+/*
+&i32        // a reference
+&'a i32     // a reference with an explicit lifetime
+&'a mut i32 // a mutable reference with an explicit lifetime
+*/
+
+// One lifetime annotation by itself doesn’t have much meaning, because the annotations
+// are meant to tell Rust how generic lifetime parameters of multiple references relate
+// to each other.
+
+
+// ------------------------- In Function Signatures --------------------------------
+// To use lifetime annotations in function signatures, we need to declare the generic
+// lifetime parameters inside angle brackets between the function name and the
+// parameter list, just as we did with generic type parameters.
+
+// Note that the question it tries to answer is whether the returned reference is valid
+// for as long as the input references are valid.
+/*
+
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+
+*/
+
+
+// The function signature now tells Rust that for some lifetime 'a, the function takes
+// two parameters, both of which are string slices that live at least as long as
+// lifetime 'a. The function signature also tells Rust that the string slice returned
+// from the function will live at least as long as lifetime 'a
+
+
+
+// Remember, when we specify the lifetime parameters in this function signature, we’re
+// not changing the lifetimes of any values passed in or returned. Rather, we’re
+// specifying that the borrow checker should reject any values that don’t adhere to
+// these constraints. Note that the longest function doesn’t need to know exactly how
+// long x and y will live, only that some scope can be substituted for 'a that will
+// satisfy this signature.
+
+
+/*
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+
+
+fn main() {
+    let string1 = String::from("long string is long");
+    let result;
+    {
+        let string2 = String::from("xyz");
+        result = longest(string1.as_str(), string2.as_str());
+    }
+    
+    println!("The longest string is {result}");
+}
+*/
+
+// This is a compile time error. longest<'a> says the output lives as long as 'a,
+// and both inputs must live at least 'a. So the compiler picks 'a as the overlap
+// of the two input lifetimes, which means the shorter one.
+
+// string1 lives until the end of main, but string2 dies at the inner }. So 'a
+// ends at that inner }.
+
+// The reference stored in result therefore has lifetime 'a and is only valid up to
+// the inner }.
+
+// println! uses it after that, which would be a use of a potentially dangling pointer.
+
+// The compiler doesn’t look at runtime values. It doesn’t know that x (the longer
+// string) would actually be returned. The signature says the result might point into
+// string2, and that’s enough to reject the code.
+
+
+
+// ------------------------------- Relationships ----------------------------------------
+// Remember that lifetime annotations are used by the compiler to make sure that a reference
+// is valid as long as it’s used. If the function output in the longest function above only
+// depends on the first parameter, then only the first parameter needs to be valid for as long
+// as the returned reference is valid. Hence, the compiler will only require annotation for the
+// first parameter. 
+
+/*
+fn longest<'a>(x: &'a str, y: &str) -> &'a str {
+    x
+}
+*/
+
+
+// Writing y: &str gets a fresh anonymous lifetime from elision, so your signature is equivalent to:
+
+/*
+fn first_element<'a, 'b>(x: &'a str, y: &'b str) -> &'a str { x }
+*/
+
+// Since 'b appears nowhere in the output, it’s unconstrained relative to the result, and
+// there’s no reason to spell it out.
+
+
+// You’re correct: result owns a heap buffer, it gets dropped when the function returns,
+// and result.as_str() would point into freed memory. The compiler rejects it with:
+
+/*
+error[E0515]: cannot return value referencing local variable `result`
+*/
+
+// General rule: a function can’t return a reference to something it created. The returned
+// reference has to borrow from an input or from 'static data. If you create the data
+// inside the function, return the owned value and move it out:
+
+/*
+fn longest(_x: &str, _y: &str) -> String {
+    String::from("really long string")
+}
+*/
+
+
+// or 
+
+/*
+fn longest<'a>(_x: &str, _y: &str) -> &'a str {
+    "really long string" // &'static str, valid for any 'a
+}
+*/
+
+
+// ----------------------------- In Struct Definitions -----------------------------------
+// So far, the structs we’ve defined all hold owned types. We can define structs to hold
+// references, but in that case, we would need to add a lifetime annotation on every
+// reference in the struct’s definition.
+
+struct ImportantExcerpt<'a> {  // We declare the generic lifetime parameter 'a
+                               // inside angle brackets after the name of the struct
+                               // so that we can use the lifetime parameter in the body
+                               // of the struct definition
+    part: &'a str,
+}
+
+fn main() {
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().unwrap();
+    let i = ImportantExcerpt {
+        part: first_sentence,
+    };
+}
+
+
+
+// This annotation means an instance of ImportantExcerpt can’t outlive the reference it
+// holds in its part field. This is why this code compiles:
+// The main function here creates an instance of the ImportantExcerpt struct that holds
+// a reference to the first sentence of the String owned by the variable novel. The data
+// in novel exists before the ImportantExcerpt instance is created. In addition, novel
+// doesn’t go out of scope until after the ImportantExcerpt goes out of scope, so the
+// reference in the ImportantExcerpt instance is valid.
+
+
+// ------------------------- Lifetime Elision -------------------------------------------
+// The compiler uses three rules to figure out the lifetimes of references when we don’t
+// specify them. These rules are applied to the function’s signature, not its body. The
+// first rule applies to input lifetimes, and the second and third rules apply to output
+// lifetimes. The rules are as follows:
+
+
+// Read about Elision rules here:
+// https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision-rules
+
+// ----------------- Generic Type Parameters, Trait Bounds, and Lifetimes -------------------
+// Let's look at what we learned in one function
+
+use std::fmt::Display;
+
+fn longest_with_an_announcement<'a, T>(
+    x: &'a str,
+    y: &'a str,
+    ann: T,
+) -> &'a str
+where 
+    T: Display,   // i.e. T implements the Display trait
+{
+    println!("Announcement! {ann}");
+    if x.len() > y.len() { x } else { y }
+}
+
+
+// This is the longest function from Listing 10-21 that returns the longer of two string
+// slices. But now it has an extra parameter named ann of the generic type T, which can
+// be filled in by any type that implements the Display trait as specified by the where
+// clause. This extra parameter will be printed using {}, which is why the Display trait
+// bound is necessary. Because lifetimes are a type of generic, the declarations of the
+// lifetime parameter 'a and the generic type parameter T go in the same list inside the
+// angle brackets after the function name.
+
+
+
